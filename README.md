@@ -23,7 +23,7 @@ A complete microservices-based movie exploration platform with dual frontend imp
   - Click director → View actors
   - Filtered cross-navigation
 - **Force Diagram Visualization**
-  - Canvas-based D3.js visualization
+  - SVG-based D3.js visualization
   - Movie → Actors → Directors relationships
   - Interactive: Click, Drag, Zoom, Collapse/Expand
   - Shows relationship network
