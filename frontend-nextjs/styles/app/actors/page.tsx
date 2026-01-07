@@ -1,0 +1,1 @@
+export default async function Page(){const r=await fetch('http://localhost:3000/api/actors',{cache:'no-store'});const d=await r.json();return <pre>{JSON.stringify(d,null,2)}</pre>}

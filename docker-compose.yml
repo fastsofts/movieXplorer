@@ -1,0 +1,208 @@
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: moviedb_postgres
+    environment:
+      POSTGRES_DB: moviedb
+      POSTGRES_USER: "postgres"
+      POSTGRES_PASSWORD: "brains76651&"
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./backend/database/init.sql:/docker-entrypoint-initdb.d/01-init.sql
+      - ./backend/database/seed.sql:/docker-entrypoint-initdb.d/02-seed.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d moviedb"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 40s
+    networks:
+      - moviexplorer_network
+
+  movie_service:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.service
+    container_name: movie_service
+    working_dir: /app/services/movie_service
+    command: ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8001"]
+    ports:
+      - "8001:8001"
+    environment:
+      DATABASE_URL: postgresql://postgres:brains76651%26@postgres:5432/moviedb
+      PYTHONPATH: /app
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - moviexplorer_network
+
+  actor_service:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.service
+    container_name: actor_service
+    working_dir: /app/services/actor_service
+    command: ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8002"]
+    ports:
+      - "8002:8002"
+    environment:
+      DATABASE_URL: postgresql://postgres:brains76651%26@postgres:5432/moviedb
+      PYTHONPATH: /app
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - moviexplorer_network
+
+  director_service:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.service
+    container_name: director_service
+    working_dir: /app/services/director_service
+    command: ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8003"]
+    ports:
+      - "8003:8003"
+    environment:
+      DATABASE_URL: postgresql://postgres:brains76651%26@postgres:5432/moviedb
+      PYTHONPATH: /app
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - moviexplorer_network
+
+  genre_service:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.service
+    container_name: genre_service
+    working_dir: /app/services/genre_service
+    command: ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8004"]
+    ports:
+      - "8004:8004"
+    environment:
+      DATABASE_URL: postgresql://postgres:brains76651%26@postgres:5432/moviedb
+      PYTHONPATH: /app
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - moviexplorer_network
+
+  review_service:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.service
+    container_name: review_service
+    working_dir: /app/services/review_service
+    command: ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8005"]
+    ports:
+      - "8005:8005"
+    environment:
+      DATABASE_URL: postgresql://postgres:brains76651%26@postgres:5432/moviedb
+      PYTHONPATH: /app
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - moviexplorer_network
+
+  favorite_service:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.service
+    container_name: favorite_service
+    working_dir: /app/services/favorite_service
+    command: ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8006"]
+    ports:
+      - "8006:8006"
+    environment:
+      DATABASE_URL: postgresql://postgres:brains76651%26@postgres:5432/moviedb
+      PYTHONPATH: /app
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - moviexplorer_network
+
+  api_gateway:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.service
+    container_name: api_gateway
+    working_dir: /app/services/api_gateway
+    command: ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: postgresql://postgres:brains76651%26@postgres:5432/moviedb
+      MOVIE_SERVICE_URL: http://movie_service:8001
+      ACTOR_SERVICE_URL: http://actor_service:8002
+      DIRECTOR_SERVICE_URL: http://director_service:8003
+      GENRE_SERVICE_URL: http://genre_service:8004
+      REVIEW_SERVICE_URL: http://review_service:8005
+      FAVORITE_SERVICE_URL: http://favorite_service:8006
+      PYTHONPATH: /app
+    depends_on:
+      movie_service:
+        condition: service_started
+      actor_service:
+        condition: service_started
+      director_service:
+        condition: service_started
+      genre_service:
+        condition: service_started
+      review_service:
+        condition: service_started
+      favorite_service:
+        condition: service_started
+    networks:
+      - moviexplorer_network
+
+  frontend_vite:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.vite
+    container_name: frontend_vite
+    ports:
+      - "5173:5173"
+    environment:
+      VITE_API_URL: http://localhost:8000
+    volumes:
+      - ./frontend-vite:/app
+      - /app/node_modules
+    depends_on:
+      api_gateway:
+        condition: service_started
+    networks:
+      - moviexplorer_network
+
+  frontend_nextjs:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.nextjs
+    container_name: frontend_nextjs
+    ports:
+      - "3000:3000"
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:8000
+    volumes:
+      - ./frontend-nextjs:/app
+      - /app/node_modules
+      - /app/.next
+    depends_on:
+      api_gateway:
+        condition: service_started
+    networks:
+      - moviexplorer_network
+
+volumes:
+  postgres_data:
+
+networks:
+  moviexplorer_network:
+    driver: bridge

@@ -1,0 +1,1 @@
+export default function Page(){return <a href='/actors'>Actors</a>}
