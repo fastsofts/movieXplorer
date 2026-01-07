@@ -34,6 +34,7 @@ A complete microservices-based movie exploration platform with dual frontend imp
   - Movie Service
   - Actor Service
   - Director Service
+  - Favorite Service
   - Genre Service
   - Review Service
 - **PostgreSQL Database** with seed data
