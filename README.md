@@ -281,7 +281,7 @@ For production deployment:
 
 This project is provided as-is for assessment purposes.
 
-## 👥 Support
+##  Support
 
 For issues or questions, please refer to the documentation in each service directory.
 
